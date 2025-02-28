@@ -78,6 +78,8 @@ bot.command("randomtank", async (ctx) => {
         nation = messageParts[2];
     }
 
+    console.log({ level, nation });
+
     // 📌 Проверяем, есть ли у пользователя сохранённые данные
     if (!userDataMap.has(`${userId}`)) {
         await ctx.reply("⚠ Вам нужно сначала авторизоваться через Wargaming.\nИспользуйте команду /start.");
@@ -126,6 +128,8 @@ async function getRandomTank(userId, accessToken, accountId, level = null, natio
         // 🔹 Выбираем случайный танк
         const randomTank = filteredTanks[Math.floor(Math.random() * filteredTanks.length)];
 
+        console.log(randomTank);
+
         // 🔹 Получаем данные о танке (название + изображение)
         const tankInfoUrl = `https://api.worldoftanks.eu/wot/encyclopedia/vehicles/`;
         const tankInfoResponse = await axios.get(tankInfoUrl, {
@@ -148,7 +152,6 @@ async function getRandomTank(userId, accessToken, accountId, level = null, natio
         }
 
         const tankName = tankData.name;
-        console.log(tankData);
         const tankImage = tankData.images.big_icon; // Получаем URL изображения танка
 
         // 🔹 Отправляем сообщение с картинкой танка
