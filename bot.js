@@ -147,7 +147,7 @@ async function getRandomTank(userId, accessToken, accountId, level = null, natio
             userId,
             randomTank.images.big_icon,
             {
-                caption: `🎲 Вам выпал случайный танк:\n🚀 **${randomTank.name}**\n⭐ Уровень: ${randomTank.tier}\n🏳️ Нация: ${randomTank.nation}`
+                caption: `🎲 Вам выпал случайный танк:\n🚀 ${randomTank.name}\n⭐ Уровень: ${randomTank.tier}\n🏳️ Нация: ${randomTank.nation}`
             }
         );
 
