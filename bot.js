@@ -189,6 +189,8 @@ app.get('/:telegram_id', async (req, res) => {
     const { telegram_id } = req.params;
     const { access_token, account_id } = req.query;
 
+    console.log({telegram_id, access_token, account_id });
+
     if (!access_token || !telegram_id || !account_id) {
         return res.status(400).send("⚠ Ошибка: Не удалось получить данные.");
     }
