@@ -160,6 +160,19 @@ async function getRandomTank(chatId, accessToken, accountId, level = null, natio
 
 bot.command("randomtank_all", async (ctx) => {
     const chatId = ctx.chat.id;
+    const messageParts = ctx.message.text.split(" ");
+    let chosenTier = null;
+
+    // 📌 Проверяем, указан ли уровень в команде
+    if (messageParts.length > 1) {
+        const parsedTier = parseInt(messageParts[1]);
+        if (!isNaN(parsedTier) && parsedTier >= 6 && parsedTier <= 10) {
+            chosenTier = parsedTier;
+        } else {
+            await ctx.reply("⚠ Укажите корректный уровень от 6 до 10, например: `/randomtank_all 8`", { parse_mode: "Markdown" });
+            return;
+        }
+    }
 
     try {
         // 📌 Получаем список участников чата
@@ -174,8 +187,8 @@ bot.command("randomtank_all", async (ctx) => {
             return;
         }
 
-        // 📌 Выбираем случайный уровень танка (1-10)
-        const randomTier = Math.floor(Math.random() * 10) + 1;
+        // 📌 Если уровень не указан – выбираем случайный от 6 до 10
+        const randomTier = chosenTier || Math.floor(Math.random() * 5) + 6;
 
         await ctx.reply(`🎲 Генерируем танки **уровня ${randomTier}** для всех участников...`);
 
@@ -193,7 +206,6 @@ bot.command("randomtank_all", async (ctx) => {
         await ctx.reply("⚠ Ошибка при получении списка пользователей.");
     }
 });
-
 
 
 
