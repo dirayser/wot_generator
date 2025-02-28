@@ -97,7 +97,7 @@ bot.command("randomtank", async (ctx) => {
 });
 
 // 📌 Функция генерации случайного танка
-async function getRandomTank(chatId, accessToken, accountId, level = null, nation = null) {
+async function getRandomTank(chatId, accessToken, accountId, level = null, nation = null, userName = "Игрок") {
     try {
         // 📌 Получаем список танков в ангаре
         const tanksStatsUrl = `https://api.worldoftanks.eu/wot/tanks/stats/`;
@@ -112,7 +112,7 @@ async function getRandomTank(chatId, accessToken, accountId, level = null, natio
         const tanks = statsResponse.data.data[accountId];
 
         if (!tanks || tanks.length === 0) {
-            await bot.telegram.sendMessage(userId, "⚠ У вас нет танков в ангаре.");
+            await bot.telegram.sendMessage(chatId, `⚠ ${userName}, у вас нет танков в ангаре.`);
             return;
         }
 
@@ -135,7 +135,7 @@ async function getRandomTank(chatId, accessToken, accountId, level = null, natio
         }
 
         if (availableTanks.length === 0) {
-            await bot.telegram.sendMessage(userId, "⚠ У вас нет танков, соответствующих фильтру.");
+            await bot.telegram.sendMessage(chatId, `⚠ ${userName}, у вас нет танков, соответствующих фильтру.`);
             return;
         }
 
@@ -147,16 +147,44 @@ async function getRandomTank(chatId, accessToken, accountId, level = null, natio
             chatId,
             randomTank.images.big_icon,
             {
-                caption: `🎲 Вам выпал случайный танк:\n🚀 ${randomTank.name}\n⭐ Уровень: ${randomTank.tier}\n🏳️ Нация: ${randomTank.nation}`
+                caption: `🎲 **${userName} получил танк:**\n🚀 **${randomTank.name}**\n⭐ Уровень: ${randomTank.tier}\n🏳️ Нация: ${randomTank.nation}`,
+                parse_mode: "Markdown"
             }
         );
 
     } catch (error) {
         console.error("❌ Ошибка в getRandomTank:", error);
-        await bot.telegram.sendMessage(userId, "⚠ Ошибка при получении случайного танка.");
+        await bot.telegram.sendMessage(chatId, `⚠ Ошибка при получении случайного танка для ${userName}.`);
     }
 }
 
+bot.command("randomtank_all", async (ctx) => {
+    const chatId = ctx.chat.id;
+    const userIdsInChat = Object.keys(userDataMap); // Получаем всех пользователей, которые есть в userDataMap
+
+    // 📌 Фильтруем пользователей, которые есть в чате
+    const usersInChat = userIdsInChat
+        .map(id => parseInt(id))
+        .filter(id => ctx.chat.all_members_are_administrators || ctx.from.id === id); // Проверяем, есть ли они в чате
+
+    if (usersInChat.length === 0) {
+        await ctx.reply("⚠ В этом чате нет авторизованных пользователей.");
+        return;
+    }
+
+    // 📌 Выбираем случайный уровень танка (1-10)
+    const randomTier = Math.floor(Math.random() * 10) + 1;
+
+    await ctx.reply(`🎲 Генерируем танки **уровня ${randomTier}** для всех участников...`);
+
+    // 📌 Генерируем случайный танк каждому пользователю
+    for (const userId of usersInChat) {
+        const { accessToken, accountId } = userDataMap.get(userId);
+        const userName = ctx.chat.type === "private" ? ctx.from.first_name : `[${ctx.from.first_name}](tg://user?id=${userId})`;
+
+        await getRandomTank(chatId, accessToken, accountId, randomTier, null, userName);
+    }
+});
 
 
 
