@@ -145,6 +145,7 @@ async function getRandomTank(userId, accessToken, accountId, level = null, natio
         }
 
         const tankName = tankData.name;
+        console.log(tankData);
         const tankImage = tankData.images.big_icon; // Получаем URL изображения танка
 
         // 🔹 Отправляем сообщение с картинкой танка
