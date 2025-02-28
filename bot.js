@@ -40,6 +40,7 @@ async function handleToken(userId, accessToken, accountId) {
             }
         });
 
+        console.log(response.data);
         const playerData = Object.values(response.data.data)[0];
         if (!playerData) {
             await bot.telegram.sendMessage(userId, "⚠ Ошибка: Не удалось получить данные игрока.");
