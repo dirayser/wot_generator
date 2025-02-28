@@ -49,7 +49,7 @@ async function handleToken(userId, accessToken, accountId) {
         }
 
         // 🔹 Сохраняем accessToken и accountId в Map
-        userDataMap.set(userId, { accessToken, accountId });
+        userDataMap.set(`${userId}`, { accessToken, accountId });
 
         await bot.telegram.sendMessage(
             userId,
@@ -81,12 +81,12 @@ bot.command("randomtank", async (ctx) => {
     console.log(userDataMap);
 
     // 📌 Проверяем, есть ли у пользователя сохранённые данные
-    if (!userDataMap.has(userId)) {
+    if (!userDataMap.has(`${userId}`)) {
         await ctx.reply("⚠ Вам нужно сначала авторизоваться через Wargaming.\nИспользуйте команду /start.");
         return;
     }
 
-    const { accessToken, accountId } = userDataMap.get(userId);
+    const { accessToken, accountId } = userDataMap.get(`${userId}`);
     await getRandomTank(userId, accessToken, accountId, level, nation);
 });
 
