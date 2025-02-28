@@ -78,8 +78,6 @@ bot.command("randomtank", async (ctx) => {
         nation = messageParts[2];
     }
 
-    console.log(userDataMap);
-
     // 📌 Проверяем, есть ли у пользователя сохранённые данные
     if (!userDataMap.has(`${userId}`)) {
         await ctx.reply("⚠ Вам нужно сначала авторизоваться через Wargaming.\nИспользуйте команду /start.");
@@ -125,6 +123,8 @@ async function getRandomTank(userId, accessToken, accountId, level = null, natio
             return;
         }
 
+        console.log(filteredTanks.length, filteredTanks[0]);
+
         // 🔹 Выбираем случайный танк
         const randomTank = filteredTanks[Math.floor(Math.random() * filteredTanks.length)];
 
@@ -135,6 +135,11 @@ async function getRandomTank(userId, accessToken, accountId, level = null, natio
                 application_id: process.env.WG_APP_ID,
                 tank_id: randomTank.tank_id
             }
+        });
+
+        console.log({
+            application_id: process.env.WG_APP_ID,
+            tank_id: randomTank.tank_id
         });
 
         const tankData = tankInfoResponse.data.data[randomTank.tank_id];
