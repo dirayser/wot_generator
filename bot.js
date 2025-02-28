@@ -36,7 +36,8 @@ async function handleToken(userId, accessToken, accountId) {
         const response = await axios.get(url, {
             params: {
                 application_id: process.env.WG_APP_ID,
-                access_token: accessToken
+                access_token: accessToken,
+                account_id: accountId
             }
         });
 
