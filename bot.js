@@ -93,8 +93,9 @@ bot.command("randomtank", async (ctx) => {
 // 📌 Функция генерации случайного танка
 async function getRandomTank(userId, accessToken, accountId, level = null, nation = null) {
     try {
-        const url = `https://api.worldoftanks.eu/wot/tanks/stats/`;
-        const response = await axios.get(url, {
+        // 📌 Получаем список танков в ангаре
+        const tanksStatsUrl = `https://api.worldoftanks.eu/wot/tanks/stats/`;
+        const statsResponse = await axios.get(tanksStatsUrl, {
             params: {
                 application_id: process.env.WG_APP_ID,
                 access_token: accessToken,
@@ -102,64 +103,55 @@ async function getRandomTank(userId, accessToken, accountId, level = null, natio
             }
         });
 
-        const tanks = response.data.data[accountId];
+        const tanks = statsResponse.data.data[accountId];
 
         if (!tanks || tanks.length === 0) {
             await bot.telegram.sendMessage(userId, "⚠ У вас нет танков в ангаре.");
             return;
         }
 
-        // 🔹 Фильтруем танки по уровню и/или нации
-        let filteredTanks = tanks.filter(tank => tank.in_garage == true);
-
-        if (level) {
-            filteredTanks = filteredTanks.filter(tank => tank.tier === parseInt(level));
-        }
-
-        if (nation) {
-            filteredTanks = filteredTanks.filter(tank => tank.nation === nation);
-        }
-
-        if (filteredTanks.length === 0) {
-            await bot.telegram.sendMessage(userId, "⚠ У вас нет подходящих танков.");
-            return;
-        }
-
-        // 🔹 Выбираем случайный танк
-        const randomTank = filteredTanks[Math.floor(Math.random() * filteredTanks.length)];
-
-        console.log(randomTank);
-
-        // 🔹 Получаем данные о танке (название + изображение)
-        const tankInfoUrl = `https://api.worldoftanks.eu/wot/encyclopedia/vehicles/`;
-        const tankInfoResponse = await axios.get(tankInfoUrl, {
+        // 📌 Получаем информацию обо всех танках (уровень, нацию)
+        const encyclopediaUrl = `https://api.worldoftanks.eu/wot/encyclopedia/vehicles/`;
+        const encyclopediaResponse = await axios.get(encyclopediaUrl, {
             params: {
-                application_id: process.env.WG_APP_ID,
-                tank_id: randomTank.tank_id
+                application_id: process.env.WG_APP_ID
             }
         });
 
-        console.log({
-            application_id: process.env.WG_APP_ID,
-            tank_id: randomTank.tank_id
-        });
+        const allTanks = encyclopediaResponse.data.data;
 
-        const tankData = tankInfoResponse.data.data[randomTank.tank_id];
+        // 📌 Соединяем данные (добавляем уровень и нацию к танкам в ангаре)
+        let availableTanks = tanks.map(tank => ({
+            ...tank,
+            ...allTanks[tank.tank_id] // Добавляем данные из энциклопедии
+        }));
 
-        if (!tankData) {
-            await bot.telegram.sendMessage(userId, "⚠ Ошибка: Не удалось получить данные о танке.");
+        availableTanks = availableTanks.filter(tank => tank.in_garage == true);
+
+        // 📌 Фильтруем по уровню
+        if (level) {
+            availableTanks = availableTanks.filter(tank => tank.tier === parseInt(level));
+        }
+
+        // 📌 Фильтруем по нации
+        if (nation) {
+            availableTanks = availableTanks.filter(tank => tank.nation === nation);
+        }
+
+        if (availableTanks.length === 0) {
+            await bot.telegram.sendMessage(userId, "⚠ У вас нет танков, соответствующих фильтру.");
             return;
         }
 
-        const tankName = tankData.name;
-        const tankImage = tankData.images.big_icon; // Получаем URL изображения танка
+        // 📌 Выбираем случайный танк
+        const randomTank = availableTanks[Math.floor(Math.random() * availableTanks.length)];
 
-        // 🔹 Отправляем сообщение с картинкой танка
+        // 📌 Отправляем сообщение с информацией о танке
         await bot.telegram.sendPhoto(
             userId,
-            tankImage,
+            randomTank.images.big_icon,
             {
-                caption: `🎲 Вам выпал случайный танк:\n🚀 **${tankName}**\n⭐ Уровень: ${tankData.tier}\n🏳️ Нация: ${tankData.nation}`
+                caption: `🎲 Вам выпал случайный танк:\n🚀 **${randomTank.name}**\n⭐ Уровень: ${randomTank.tier}\n🏳️ Нация: ${randomTank.nation}`
             }
         );
 
