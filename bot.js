@@ -6,6 +6,8 @@ const helmet = require('helmet');
 const { Telegraf, Markup } = require('telegraf');
 const axios = require('axios');
 
+const tankDataMap = new Map(); // 📌 Кеш для данных о танках
+
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
 // 📌 Ссылка для авторизации в Wargaming
@@ -114,30 +116,20 @@ async function getRandomTank(userId, accessToken, accountId, level = null, natio
             return;
         }
 
-        // 📌 Получаем информацию обо всех танках (уровень, нацию)
-        const encyclopediaUrl = `https://api.worldoftanks.eu/wot/encyclopedia/vehicles/`;
-        const encyclopediaResponse = await axios.get(encyclopediaUrl, {
-            params: {
-                application_id: process.env.WG_APP_ID
-            }
-        });
+        // 📌 Соединяем данные из кеша (добавляем уровень и нацию к танкам в ангаре)
+        let availableTanks = tanks
+            .map(tank => ({
+                ...tank,
+                ...tankDataMap.get(tank.tank_id) // Берём данные из кеша энциклопедии
+            }))
+            .filter(tank => tank.name && tank.in_garage); // Оставляем только танки, которые в ангаре
 
-        const allTanks = encyclopediaResponse.data.data;
-
-        // 📌 Соединяем данные (добавляем уровень и нацию к танкам в ангаре)
-        let availableTanks = tanks.map(tank => ({
-            ...tank,
-            ...allTanks[tank.tank_id] // Добавляем данные из энциклопедии
-        }));
-
-        availableTanks = availableTanks.filter(tank => tank.in_garage == true);
-
-        // 📌 Фильтруем по уровню
+        // 📌 Фильтруем по уровню (если задан)
         if (level) {
             availableTanks = availableTanks.filter(tank => tank.tier === parseInt(level));
         }
 
-        // 📌 Фильтруем по нации
+        // 📌 Фильтруем по нации (если задана)
         if (nation) {
             availableTanks = availableTanks.filter(tank => tank.nation === nation);
         }
@@ -150,7 +142,7 @@ async function getRandomTank(userId, accessToken, accountId, level = null, natio
         // 📌 Выбираем случайный танк
         const randomTank = availableTanks[Math.floor(Math.random() * availableTanks.length)];
 
-        // 📌 Отправляем сообщение с информацией о танке
+        // 📌 Отправляем сообщение с изображением танка
         await bot.telegram.sendPhoto(
             userId,
             randomTank.images.big_icon,
@@ -160,10 +152,11 @@ async function getRandomTank(userId, accessToken, accountId, level = null, natio
         );
 
     } catch (error) {
-        console.error(error);
+        console.error("❌ Ошибка в getRandomTank:", error);
         await bot.telegram.sendMessage(userId, "⚠ Ошибка при получении случайного танка.");
     }
 }
+
 
 
 
@@ -188,6 +181,7 @@ app.use(function (req, res, next) {
 
 app.listen(port, () => {
     console.log(`Server started on port: ${port}`);
+    loadTankData();
 });
 
 
@@ -208,3 +202,28 @@ app.get('/:telegram_id', async (req, res) => {
     // 📌 Редиректим в Telegram
     res.redirect(`https://t.me/${process.env.BOT_USERNAME}`);
 });
+
+// 📌 Функция загрузки танков при запуске бота
+async function loadTankData() {
+    try {
+        console.log("🔄 Загружаем данные о танках...");
+        const url = `https://api.worldoftanks.eu/wot/encyclopedia/vehicles/`;
+        const response = await axios.get(url, {
+            params: { application_id: process.env.WG_APP_ID }
+        });
+
+        if (response.data.status !== "ok") {
+            console.error("❌ Ошибка загрузки данных о танках:", response.data.error);
+            return;
+        }
+
+        // 📌 Сохраняем танки в `Map`
+        for (const [tankId, tankInfo] of Object.entries(response.data.data)) {
+            tankDataMap.set(parseInt(tankId), tankInfo);
+        }
+
+        console.log(`✅ Загружено ${tankDataMap.size} танков.`);
+    } catch (error) {
+        console.error("❌ Ошибка при загрузке данных о танках:", error);
+    }
+}
