@@ -53,7 +53,7 @@ async function handleToken(userId, accessToken, accountId) {
 
         await bot.telegram.sendMessage(
             userId,
-            `✅ Авторизация успешна!\n👤 Игрок: ${playerData.nickname}\n🎮 Бои: ${playerData.statistics.battles}\n\nТеперь ты можешь использовать команду /randomtank`
+            `✅ Авторизация успешна!\n👤 Игрок: ${playerData.nickname}\n\nТеперь ты можешь использовать команду /randomtank`
         );
 
     } catch (error) {
@@ -77,6 +77,8 @@ bot.command("randomtank", async (ctx) => {
     if (messageParts.length > 2) {
         nation = messageParts[2];
     }
+
+    console.log(userDataMap);
 
     // 📌 Проверяем, есть ли у пользователя сохранённые данные
     if (!userDataMap.has(userId)) {
@@ -108,7 +110,7 @@ async function getRandomTank(userId, accessToken, accountId, level = null, natio
         }
 
         // 🔹 Фильтруем танки по уровню и/или нации
-        let filteredTanks = tanks;
+        let filteredTanks = tanks.filter(tank => tank.in_garage == true);
 
         if (level) {
             filteredTanks = filteredTanks.filter(tank => tank.tier === parseInt(level));
