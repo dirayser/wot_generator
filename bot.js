@@ -72,6 +72,10 @@ bot.command("randomtank", async (ctx) => {
 
     if (messageParts.length > 1) {
         level = !isNaN(messageParts[1]) ? messageParts[1] : null;
+
+        if (isNaN(messageParts[1])) {
+            nation = messageParts[1]
+        }
     }
 
     if (messageParts.length > 2) {
