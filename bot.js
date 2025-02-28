@@ -93,11 +93,11 @@ bot.command("randomtank", async (ctx) => {
     }
 
     const { accessToken, accountId } = userDataMap.get(`${userId}`);
-    await getRandomTank(userId, accessToken, accountId, level, nation);
+    await getRandomTank(ctx.chat.id, accessToken, accountId, level, nation);
 });
 
 // 📌 Функция генерации случайного танка
-async function getRandomTank(userId, accessToken, accountId, level = null, nation = null) {
+async function getRandomTank(chatId, accessToken, accountId, level = null, nation = null) {
     try {
         // 📌 Получаем список танков в ангаре
         const tanksStatsUrl = `https://api.worldoftanks.eu/wot/tanks/stats/`;
@@ -144,7 +144,7 @@ async function getRandomTank(userId, accessToken, accountId, level = null, natio
 
         // 📌 Отправляем сообщение с изображением танка
         await bot.telegram.sendPhoto(
-            userId,
+            chatId,
             randomTank.images.big_icon,
             {
                 caption: `🎲 Вам выпал случайный танк:\n🚀 ${randomTank.name}\n⭐ Уровень: ${randomTank.tier}\n🏳️ Нация: ${randomTank.nation}`
