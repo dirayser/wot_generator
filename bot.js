@@ -160,31 +160,40 @@ async function getRandomTank(chatId, accessToken, accountId, level = null, natio
 
 bot.command("randomtank_all", async (ctx) => {
     const chatId = ctx.chat.id;
-    const userIdsInChat = Object.keys(userDataMap); // Получаем всех пользователей, которые есть в userDataMap
 
-    // 📌 Фильтруем пользователей, которые есть в чате
-    const usersInChat = userIdsInChat
-        .map(id => parseInt(id))
-        .filter(id => ctx.chat.all_members_are_administrators || ctx.from.id === id); // Проверяем, есть ли они в чате
+    try {
+        // 📌 Получаем список участников чата
+        const members = await bot.telegram.getChatAdministrators(chatId);
+        const userIdsInChat = members.map(member => member.user.id);
 
-    if (usersInChat.length === 0) {
-        await ctx.reply("⚠ В этом чате нет авторизованных пользователей.");
-        return;
-    }
+        // 📌 Оставляем только тех, кто есть в userDataMap (авторизованные пользователи)
+        const authorizedUsers = userIdsInChat.filter(id => userDataMap.has(`${id}`));
 
-    // 📌 Выбираем случайный уровень танка (1-10)
-    const randomTier = Math.floor(Math.random() * 10) + 1;
+        if (authorizedUsers.length === 0) {
+            await ctx.reply("⚠ В этом чате нет авторизованных пользователей.");
+            return;
+        }
 
-    await ctx.reply(`🎲 Генерируем танки **уровня ${randomTier}** для всех участников...`);
+        // 📌 Выбираем случайный уровень танка (1-10)
+        const randomTier = Math.floor(Math.random() * 10) + 1;
 
-    // 📌 Генерируем случайный танк каждому пользователю
-    for (const userId of usersInChat) {
-        const { accessToken, accountId } = userDataMap.get(userId);
-        const userName = ctx.chat.type === "private" ? ctx.from.first_name : `[${ctx.from.first_name}](tg://user?id=${userId})`;
+        await ctx.reply(`🎲 Генерируем танки **уровня ${randomTier}** для всех участников...`);
 
-        await getRandomTank(chatId, accessToken, accountId, randomTier, null, userName);
+        // 📌 Генерируем случайный танк каждому пользователю
+        for (const userId of authorizedUsers) {
+            const { accessToken, accountId } = userDataMap.get(`${userId}`);
+            const userInfo = members.find(member => member.user.id == userId);
+            const userName = userInfo ? `[${userInfo.user.first_name}](tg://user?id=${userId})` : `Игрок ${userId}`;
+
+            await getRandomTank(chatId, accessToken, accountId, randomTier, null, userName);
+        }
+
+    } catch (error) {
+        console.error("❌ Ошибка в randomtank_all:", error);
+        await ctx.reply("⚠ Ошибка при получении списка пользователей.");
     }
 });
+
 
 
 
