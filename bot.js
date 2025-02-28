@@ -123,13 +123,11 @@ async function getRandomTank(userId, accessToken, accountId, level = null, natio
             return;
         }
 
-        console.log(filteredTanks.length, filteredTanks[0]);
-
         // 🔹 Выбираем случайный танк
         const randomTank = filteredTanks[Math.floor(Math.random() * filteredTanks.length)];
 
         // 🔹 Получаем данные о танке (название + изображение)
-        const tankInfoUrl = `https://api.worldoftanks.eu/wot/encyclopedia/tankinfo/`;
+        const tankInfoUrl = `https://api.worldoftanks.eu/wot/encyclopedia/vehicles/`;
         const tankInfoResponse = await axios.get(tankInfoUrl, {
             params: {
                 application_id: process.env.WG_APP_ID,
@@ -151,7 +149,7 @@ async function getRandomTank(userId, accessToken, accountId, level = null, natio
 
         const tankName = tankData.name;
         console.log(tankData);
-        const tankImage = tankData.images.big_icon; // Получаем URL изображения танка
+        const tankImage = tankData.image; // Получаем URL изображения танка
 
         // 🔹 Отправляем сообщение с картинкой танка
         await bot.telegram.sendPhoto(
