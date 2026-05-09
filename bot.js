@@ -166,10 +166,10 @@ bot.command("randomtank_all", async (ctx) => {
     // 📌 Проверяем, указан ли уровень в команде
     if (messageParts.length > 1) {
         const parsedTier = parseInt(messageParts[1]);
-        if (!isNaN(parsedTier) && parsedTier >= 8 && parsedTier <= 10) {
+        if (!isNaN(parsedTier) && parsedTier >= 8 && parsedTier <= 11) {
             chosenTier = parsedTier;
         } else {
-            await ctx.reply("⚠ Укажите корректный уровень от 8 до 10, например: `/randomtank_all 8`", { parse_mode: "Markdown" });
+            await ctx.reply("⚠ Укажите корректный уровень от 8 до 11, например: `/randomtank_all 8`", { parse_mode: "Markdown" });
             return;
         }
     }
@@ -187,8 +187,8 @@ bot.command("randomtank_all", async (ctx) => {
             return;
         }
 
-        // 📌 Если уровень не указан – выбираем случайный от 6 до 10
-        const randomTier = chosenTier || Math.floor(Math.random() * 3) + 8;
+        // 📌 Если уровень не указан – выбираем случайный от 8 до 11
+        const randomTier = chosenTier || Math.floor(Math.random() * 4) + 8;
 
         await ctx.reply(`🎲 Генерируем танки **уровня ${randomTier}** для всех участников...`);
 
